@@ -11,7 +11,7 @@ In production, this would integrate with:
 from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, desc
+from sqlalchemy import desc
 from app.models.models import TelemetrySample, Node
 
 
@@ -110,8 +110,6 @@ class TelemetryService:
         """
         cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
         return db.query(TelemetrySample).filter(
-            and_(
-                TelemetrySample.node_id == node_id,
-                TelemetrySample.timestamp >= cutoff_time
-            )
+            TelemetrySample.node_id == node_id,
+            TelemetrySample.timestamp >= cutoff_time
         ).order_by(TelemetrySample.timestamp).all()
