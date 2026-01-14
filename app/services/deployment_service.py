@@ -82,9 +82,9 @@ class DeploymentService:
             limit: Maximum number of records to return
             
         Returns:
-            List of Deployment objects
+            List of Deployment objects, ordered by ID descending (most recent first)
         """
-        return db.query(Deployment).offset(skip).limit(limit).all()
+        return db.query(Deployment).order_by(Deployment.id.desc()).offset(skip).limit(limit).all()
     
     @staticmethod
     def get_deployment_node_count(db: Session, deployment_id: int) -> int:
