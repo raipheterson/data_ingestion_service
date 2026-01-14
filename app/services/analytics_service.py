@@ -81,9 +81,10 @@ class AnalyticsService:
                 node_samples[sample.node_id] = []
             node_samples[sample.node_id].append(sample)
         
-        bottlenecks = []
+        # First pass: Identify bottlenecks and collect their IDs and metrics
+        bottleneck_data = []
+        bottleneck_node_ids = []
         
-        # Check each node for deviations
         for node_id, node_sample_list in node_samples.items():
             # Get average metrics for this node in the time window
             node_latency = mean([s.latency_ms for s in node_sample_list])
@@ -120,19 +121,38 @@ class AnalyticsService:
             )
             
             if is_bottleneck:
-                # Get node details
-                node = db.query(Node).filter(Node.id == node_id).first()
-                if node:
-                    bottlenecks.append(BottleneckNode(
-                        node_id=node.id,
-                        node_identifier=node.node_id,
-                        deployment_id=deployment_id,
-                        latency_ms=node_latency,
-                        throughput_gbps=node_throughput,
-                        error_rate=node_error_rate,
-                        deviation_score=deviation_score,
-                        timestamp=max([s.timestamp for s in node_sample_list]),
-                    ))
+                bottleneck_node_ids.append(node_id)
+                bottleneck_data.append({
+                    'node_id': node_id,
+                    'latency_ms': node_latency,
+                    'throughput_gbps': node_throughput,
+                    'error_rate': node_error_rate,
+                    'deviation_score': deviation_score,
+                    'timestamp': max(s.timestamp for s in node_sample_list),
+                })
+        
+        # Bulk fetch all bottleneck nodes in a single query
+        if bottleneck_node_ids:
+            nodes = db.query(Node).filter(Node.id.in_(bottleneck_node_ids)).all()
+            node_lookup = {node.id: node for node in nodes}
+        else:
+            node_lookup = {}
+        
+        # Second pass: Build BottleneckNode objects using the lookup dictionary
+        bottlenecks = []
+        for data in bottleneck_data:
+            node = node_lookup.get(data['node_id'])
+            if node:
+                bottlenecks.append(BottleneckNode(
+                    node_id=node.id,
+                    node_identifier=node.node_id,
+                    deployment_id=deployment_id,
+                    latency_ms=data['latency_ms'],
+                    throughput_gbps=data['throughput_gbps'],
+                    error_rate=data['error_rate'],
+                    deviation_score=data['deviation_score'],
+                    timestamp=data['timestamp'],
+                ))
         
         # Sort by deviation score (worst first)
         bottlenecks.sort(key=lambda x: x.deviation_score, reverse=True)
