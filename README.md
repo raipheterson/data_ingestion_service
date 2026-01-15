@@ -1,6 +1,6 @@
 # Network Deployment & Telemetry Orchestrator
 
-A production-style backend service that simulates large-scale network deployments (100-200 switches) for orchestration, monitoring, and bottleneck detection. The hardware is simulated, but the architecture, workflows, and data handling are realistic and production-oriented.
+A production-style backend service that simulates large-scale network deployments (data center network fabrics) with nodes (switches/routers) for orchestration, monitoring, and bottleneck detection. The hardware is simulated, but the architecture, workflows, and data handling are realistic and production-oriented.
 
 ## Overview
 
@@ -79,7 +79,6 @@ The bottleneck detection algorithm uses statistical deviation analysis:
 
 ### Documentation
 - `GET /docs` - Interactive API documentation (Swagger UI)
-- `GET /redoc` - Alternative API documentation (ReDoc)
 
 ## Installation & Setup
 
@@ -196,11 +195,23 @@ The test suite includes:
 
 ### Telemetry Storage
 - **Current**: Stored in relational tables (SQLAlchemy)
-- **Production Recommendation**: Use a time-series database (InfluxDB, TimescaleDB) for:
-  - Better query performance on time-range queries
-  - Automatic data retention policies
-  - Compression and downsampling
-  - Higher write throughput
+- **Production Recommendation**: Use **Prometheus** for time-series metrics collection and storage:
+  - Industry-standard for metrics collection and monitoring
+  - Efficient storage format optimized for time-series data
+  - Built-in query language (PromQL) for analytics and alerting
+  - Native integration with Grafana for visualization
+  - Automatic data retention and compaction
+  - High write throughput for high-frequency metrics
+  - Pull-based collection model (can also push via Pushgateway)
+
+### Logging and Event Storage
+- **Current**: Event model stores audit logs in relational database
+- **Production Recommendation**: Use **Elasticsearch** (with Kibana) for logs and events:
+  - Optimized for full-text search and log aggregation
+  - Efficient indexing and querying of structured and unstructured logs
+  - Real-time log analysis and visualization with Kibana
+  - Automatic log rotation and retention policies
+  - Better suited for high-volume log ingestion than relational databases
 
 ### Deterministic Simulation
 - **Approach**: Telemetry and state transitions use deterministic algorithms based on node IDs
@@ -210,9 +221,8 @@ The test suite includes:
 ### Background Workers
 - **Current**: Simple asyncio tasks running in the same process
 - **Production**: Consider:
-  - Separate worker processes (Celery, RQ)
-  - Distributed task queues (RabbitMQ, Redis)
-  - Horizontal scaling of workers
+  - Distributed task queues (Redis\Queue)
+  - Horizontal scaling of workers 
   - Worker health monitoring and auto-restart
 
 ### Bottleneck Detection Algorithm
@@ -228,50 +238,20 @@ The test suite includes:
 - **Current**: Basic exception handling with HTTP status codes
 - **Production**: Add:
   - Structured logging (JSON logs)
-  - Error tracking (Sentry, Rollbar)
   - Retry mechanisms with exponential backoff
-  - Circuit breakers for external dependencies
 
 ## Production Considerations
 
-### Where Real Integration Would Happen
+### Production Integration Points
 
-1. **Hardware Provisioning** (`app/workers/lifecycle_worker.py`):
-   - Replace simulation with cloud provider APIs (AWS EC2, Azure VMs, GCP Compute)
-   - Integrate with infrastructure-as-code tools (Terraform, Ansible)
-
-2. **Configuration Management** (`app/services/node_service.py`):
-   - NETCONF/YANG for network device configuration
-   - Ansible playbooks for automated setup
-   - Configuration versioning and rollback
-
-3. **Telemetry Collection** (`app/workers/telemetry_worker.py`):
-   - SNMP polling for network devices
-   - gRPC/HTTP agents running on nodes
-   - Streaming data pipelines (Kafka, RabbitMQ)
-
-4. **Monitoring & Alerting** (`app/services/analytics_service.py`):
-   - Integration with Prometheus, Grafana
-   - PagerDuty/OpsGenie for alerts
-   - Real-time dashboards
-
-### Missing Production Features (Intentionally Excluded)
-
-- **Authentication/Authorization**: Add OAuth2, JWT tokens, or API keys
-- **Docker**: Containerization for deployment
-- **Database Migrations**: Use Alembic for schema versioning
-- **Caching**: Redis for frequently accessed data
-- **Rate Limiting**: Protect API from abuse
-- **API Versioning**: Support multiple API versions simultaneously
+- **Hardware Provisioning** (`app/workers/lifecycle_worker.py`): Replace simulation with cloud/hardware APIs
+- **Telemetry Collection** (`app/workers/telemetry_worker.py`): Polling, Kafka streams
+- **Monitoring & Alerting** (`app/services/analytics_service.py`): Prometheus metrics, Grafana dashboards
 
 ## Testing
 
-While not included in this implementation, production code should include:
-- Unit tests for services and workers
-- Integration tests for API endpoints
-- Load testing for telemetry ingestion
-- End-to-end tests for deployment workflows
+The current test suite includes integration tests for API endpoints and basic workflow tests. Production code should additionally include:
+- **Isolated unit tests** for services and workers (e.g., test bottleneck detection algorithm in isolation, test state transition logic without database)
+- **Load testing** for telemetry ingestion (e.g., simulate 1000 nodes, measure throughput)
+- **Comprehensive end-to-end tests** for full deployment workflows (e.g., create deployment → nodes reach RUNNING → collect telemetry → detect bottlenecks)
 
-## License
-
-Internal infrastructure service - not for external distribution.
