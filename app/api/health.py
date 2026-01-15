@@ -27,7 +27,7 @@ def health_check(db: Session = Depends(get_db)):
         db_status = "unhealthy"
     
     # Count active deployments
-    active_deployments = len(DeploymentService.list_deployments(db, limit=1000))
+    active_deployments = DeploymentService.count_deployments(db)
     
     # Check worker status
     workers_active = lifecycle_worker.running and telemetry_worker.running

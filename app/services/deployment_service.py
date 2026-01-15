@@ -98,3 +98,15 @@ class DeploymentService:
             Number of nodes
         """
         return db.query(Node).filter(Node.deployment_id == deployment_id).count()
+    
+    @staticmethod
+    def count_deployments(db: Session) -> int:
+        """Get the total number of deployments.
+        
+        Args:
+            db: Database session
+            
+        Returns:
+            Total number of deployments
+        """
+        return db.query(Deployment).count()
