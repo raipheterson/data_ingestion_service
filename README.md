@@ -112,13 +112,7 @@ The API will be available at `http://localhost:8000`
 
 1. **Create a deployment**:
 ```bash
-curl -X POST "http://localhost:8000/deployments" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Production Network",
-    "description": "Main production deployment",
-    "target_node_count": 50
-  }'
+curl -X POST "http://localhost:8000/deployments" -H "Content-Type: application/json" -d '{"name": "Production Network", "description": "Main production deployment", "target_node_count": 50}'
 ```
 
 2. **Check deployment status**:

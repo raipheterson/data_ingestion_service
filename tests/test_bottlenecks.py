@@ -33,15 +33,16 @@ def test_bottleneck_endpoint_returns_structured_output(client, db_session: Sessi
         
         # Make some nodes (i > 2) have worse metrics to create bottlenecks
         if i > 2:
-            # Bottleneck nodes: high latency, low throughput, high error rate
-            latency = 80.0 + i * 10.0
-            throughput = 5.0 - i * 0.5
-            error_rate = 2.0 + i * 0.3
+            # Bottleneck nodes: very high latency, very low throughput, very high error rate
+            # These values are significantly worse to ensure they exceed 2 standard deviations
+            latency = 150.0 + i * 20.0  # Much higher latency
+            throughput = 2.0 - i * 0.3   # Much lower throughput
+            error_rate = 4.0 + i * 0.5   # Much higher error rate
         else:
-            # Normal nodes: good metrics
-            latency = 10.0 + i * 2.0
-            throughput = 9.5 - i * 0.1
-            error_rate = 0.1 + i * 0.02
+            # Normal nodes: good metrics (consistent values)
+            latency = 10.0  # All normal nodes have similar good latency
+            throughput = 9.5  # All normal nodes have similar good throughput
+            error_rate = 0.1  # All normal nodes have similar low error rate
         
         # Create multiple samples for each node
         for j in range(10):

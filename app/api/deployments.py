@@ -1,9 +1,12 @@
 """API routes for deployment management."""
 
+import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.base import get_db
+
+logger = logging.getLogger(__name__)
 from app.schemas.schemas import (
     DeploymentCreate,
     DeploymentResponse,
@@ -32,7 +35,10 @@ def create_deployment(
     
     The nodes will start in PENDING state and be processed by background workers.
     """
+    logger.info(f"Creating deployment: name='{deployment_data.name}', target_node_count={deployment_data.target_node_count}")
     deployment = DeploymentService.create_deployment(db, deployment_data)
+    logger.info(f"Deployment created successfully: id={deployment.id}, name='{deployment.name}'")
+    logger.debug(f"Deployment details: {deployment_data.model_dump()}")
     return deployment
 
 
@@ -53,11 +59,14 @@ def get_deployment(
     db: Session = Depends(get_db)
 ):
     """Get a specific deployment by ID."""
+    logger.info(f"Fetching deployment: id={deployment_id}")
     deployment = DeploymentService.get_deployment(db, deployment_id)
     if not deployment:
+        logger.warning(f"Deployment not found: id={deployment_id}")
         raise HTTPException(status_code=404, detail="Deployment not found")
     
     node_count = DeploymentService.get_deployment_node_count(db, deployment_id)
+    logger.info(f"Deployment retrieved: id={deployment_id}, name='{deployment.name}', node_count={node_count}")
     
     return {
         **DeploymentResponse.model_validate(deployment).model_dump(),
@@ -71,12 +80,15 @@ def get_deployment_nodes(
     db: Session = Depends(get_db)
 ):
     """Get all nodes for a specific deployment."""
+    logger.info(f"Fetching nodes for deployment: id={deployment_id}")
     # Verify deployment exists
     deployment = DeploymentService.get_deployment(db, deployment_id)
     if not deployment:
+        logger.warning(f"Deployment not found when fetching nodes: id={deployment_id}")
         raise HTTPException(status_code=404, detail="Deployment not found")
     
     nodes = NodeService.get_nodes_by_deployment(db, deployment_id)
+    logger.info(f"Retrieved {len(nodes)} nodes for deployment: id={deployment_id}")
     return NodeListResponse(
         nodes=[NodeResponse.model_validate(node) for node in nodes],
         total=len(nodes),
@@ -96,9 +108,11 @@ def get_deployment_telemetry(
     
     Supports optional filtering by node ID and time range.
     """
+    logger.info(f"Fetching telemetry for deployment: id={deployment_id}, node_id={node_id}, limit={limit}")
     # Verify deployment exists
     deployment = DeploymentService.get_deployment(db, deployment_id)
     if not deployment:
+        logger.warning(f"Deployment not found when fetching telemetry: id={deployment_id}")
         raise HTTPException(status_code=404, detail="Deployment not found")
     
     # Parse datetime strings if provided
@@ -114,6 +128,7 @@ def get_deployment_telemetry(
         end_time=end_dt,
         limit=limit,
     )
+    logger.info(f"Retrieved {len(samples)} telemetry samples for deployment: id={deployment_id}")
     
     return TelemetryListResponse(
         samples=[TelemetrySampleResponse.model_validate(s) for s in samples],
@@ -132,9 +147,11 @@ def get_deployment_bottlenecks(
     Uses statistical deviation analysis to identify nodes with abnormal
     latency, throughput, or error rates.
     """
+    logger.info(f"Analyzing bottlenecks for deployment: id={deployment_id}, window={analysis_window_minutes} minutes")
     # Verify deployment exists
     deployment = DeploymentService.get_deployment(db, deployment_id)
     if not deployment:
+        logger.warning(f"Deployment not found when analyzing bottlenecks: id={deployment_id}")
         raise HTTPException(status_code=404, detail="Deployment not found")
     
     bottlenecks = AnalyticsService.detect_bottlenecks(
@@ -142,5 +159,6 @@ def get_deployment_bottlenecks(
         deployment_id=deployment_id,
         analysis_window_minutes=analysis_window_minutes,
     )
+    logger.info(f"Bottleneck analysis complete: deployment_id={deployment_id}, detected={bottlenecks.total_bottlenecks} bottlenecks")
     
     return bottlenecks
