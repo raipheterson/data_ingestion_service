@@ -248,6 +248,15 @@ The test suite includes:
 - **Telemetry Collection** (`app/workers/telemetry_worker.py`): Polling, Kafka streams
 - **Monitoring & Alerting** (`app/services/analytics_service.py`): Prometheus metrics, Grafana dashboards
 
+## Missing Features
+
+The following features are not currently implemented but would be valuable additions:
+
+- **Dynamic Node Management**: Add or remove nodes from existing deployments (e.g., `POST /deployments/{id}/nodes`, `DELETE /deployments/{id}/nodes/{node_id}`)
+- **Deployment Updates**: Modify deployment metadata (name, description) after creation
+- **Deployment Deletion**: Remove deployments and their associated nodes
+- **Node-Specific Operations**: Individual node management endpoints (get, update, delete single node)
+
 ## Testing
 
 The current test suite includes integration tests for API endpoints and basic workflow tests. Production code should additionally include:
