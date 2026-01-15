@@ -80,11 +80,11 @@ flowchart TB
     FastAPI -->|Start/Stop| TelemetryWorker
 
     %% Styling
-    classDef apiLayer fill:#e1f5ff,stroke:#01579b,stroke-width:2px
-    classDef serviceLayer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef workerLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef dbLayer fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    classDef simLayer fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef apiLayer fill:#e1f5ff,stroke:#01579b,stroke-width:2px,color:#000
+    classDef serviceLayer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef workerLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef dbLayer fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef simLayer fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
 
     class FastAPI,DeployRouter,HealthRouter apiLayer
     class DeployService,NodeService,TelemetryService,AnalyticsService serviceLayer
