@@ -137,7 +137,7 @@ class Event(Base):
     node_id = Column(Integer, ForeignKey("nodes.id"), nullable=True)
     event_type = Column(String(50), nullable=False, index=True)  # e.g., "STATE_CHANGE", "ERROR", "TELEMETRY_COLLECTED"
     message = Column(Text, nullable=False)
-    metadata = Column(Text, nullable=True)  # JSON string for additional context
+    event_metadata = Column(Text, nullable=True)  # JSON string for additional context
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     
     # Relationships
